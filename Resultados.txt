@@ -1,0 +1,181 @@
+=================================================================
+  DETECCIÓN DE SPAM EN SMS
+=================================================================
+
+[Dataset]
+  Total mensajes : 5572
+  Ham            : 4825  (86.6%)
+  Spam           : 747  (13.4%)
+  Ratio desbalance: 1 spam por cada 6.5 ham
+
+[EDA] Estadísticas de longitud de mensaje:
+        count   mean   std   min    25%    50%    75%    max
+label                                                       
+ham    4825.0   71.0  58.0   2.0   33.0   52.0   92.0  910.0
+spam    747.0  138.9  29.2  13.0  132.5  149.0  157.0  224.0 
+
+[EDA] Medias de features heurísticas por clase:
+       digit_ratio  upper_ratio  exclamations  currency_signs  has_url  has_free  has_win  has_urgent
+label                                                                                                
+ham         0.0042       0.0595        0.1739          0.0048   0.0035    0.0137   0.0015      0.0021
+spam        0.1158       0.1106        0.7256          0.4391   0.1821    0.2664   0.1017      0.1031 
+
+[EDA] Top 10 términos SPAM: ['free', 'txt', 'ur', 'mobile', 'text', 'stop', 'claim', 'reply', 'www', 'prize']
+[EDA] Top 10 términos HAM : ['gt', 'lt', 'just', 'ok', 'll', 'ur', 'know', 'good', 'like', 'got'] 
+
+[Preprocesamiento] Ejemplo de mensaje limpiado:
+  Original : Go until jurong point, crazy.. Available only in bugis n great world la e buffet... Cine there got amore wat...
+  Limpiado : go jurong point crazi avail bugi great world la buffet cine got amor wat
+
+[Split] Train: 4457 muestras | Test: 1115 muestras
+        Spam en train: 598 | Spam en test: 149
+
+=================================================================
+  CROSS-VALIDACIÓN (5 folds estratificados) — Pipeline correcto
+=================================================================
+  Naive Bayes            F1=0.9120±0.0108  AUC=0.9885±0.0033
+  Logistic Regression    F1=0.9003±0.0176  AUC=0.9885±0.0039
+  Linear SVM             F1=0.9404±0.0045  AUC=0.9932±0.0036
+  Random Forest          F1=0.9257±0.0088  AUC=0.9919±0.0046
+
+  Mejor modelo en CV: Linear SVM
+
+=================================================================
+  EVALUACIÓN FINAL EN TEST SET (todos los modelos)
+=================================================================
+
+  Naive Bayes
+    Spam — Precision: 0.9922 | Recall: 0.8523 | F1: 0.9170
+    Accuracy: 0.9794 | AUC: 0.9875
+
+  Logistic Regression
+    Spam — Precision: 0.8443 | Recall: 0.9463 | F1: 0.8924
+    Accuracy: 0.9695 | AUC: 0.9855
+
+  Linear SVM
+    Spam — Precision: 0.9342 | Recall: 0.9530 | F1: 0.9435
+    Accuracy: 0.9848 | AUC: 0.9920
+
+  Random Forest
+    Spam — Precision: 1.0000 | Recall: 0.8792 | F1: 0.9357
+    Accuracy: 0.9839 | AUC: 0.9863
+
+[Tabla resumen — test set]
+                     Precision_spam  Recall_spam  F1_spam  Accuracy     AUC
+Linear SVM                   0.9342       0.9530   0.9435    0.9848  0.9920
+Random Forest                1.0000       0.8792   0.9357    0.9839  0.9863
+Naive Bayes                  0.9922       0.8523   0.9170    0.9794  0.9875
+Logistic Regression          0.8443       0.9463   0.8924    0.9695  0.9855
+
+=================================================================
+  TUNING DE HIPERPARÁMETROS — GridSearchCV (Linear SVM)
+=================================================================
+  Mejores parámetros : {'model__C': 5.0, 'tfidf__max_features': 3000}
+  Mejor F1 en CV     : 0.9455
+
+=================================================================
+  EVALUACIÓN FINAL — Linear SVM (hiperparámetros optimizados)
+=================================================================
+
+  Matriz de confusión:
+    TN=958  FP=8
+    FN=8  TP=141
+
+  Falsos Positivos (ham → spam): 8
+  Falsos Negativos (spam → ham): 8
+
+  Reporte completo:
+              precision    recall  f1-score   support
+
+         ham       0.99      0.99      0.99       966
+        spam       0.95      0.95      0.95       149
+
+    accuracy                           0.99      1115
+   macro avg       0.97      0.97      0.97      1115
+weighted avg       0.99      0.99      0.99      1115
+
+  [Guardado] plots/08_confusion_all_models.png
+
+=================================================================
+  ANÁLISIS DE ERRORES CATEGORIZADO
+=================================================================
+
+  Falsos Positivos (ham mal clasificado como spam): 8
+  Falsos Negativos (spam mal clasificado como ham) : 8
+  Total errores: 16 / 1115 (1.43%)
+
+  [Falsos Positivos — mensajes ham que parecen spam]
+    FP-1: Oh god i am happy to see your message after 3 days
+    FP-2: This is ur face test ( 1 2 3 4 5 6 7 8 9  &lt;#&gt;  ) select any number i will tell ur face astrology.... am waiting. q
+    FP-3: S..antha num corrct dane
+    FP-4: 645
+    FP-5: I guess it is useless calling u 4 something important.
+
+  [Falsos Negativos — mensajes spam que pasan como ham]
+    FN-1: Sorry I missed your call let's talk when you have the time. I'm on 07090201529
+    FN-2: Latest News! Police station toilet stolen, cops have nothing to go on!
+    FN-3: For sale - arsenal dartboard. Good condition but no doubles or trebles!
+    FN-4: Email AlertFrom: Jeri StewartSize: 2KBSubject: Low-cost prescripiton drvgsTo listen to email call 123
+    FN-5: ROMCAPspam Everyone around should be responding well to your presence since you are so warm and outgoing. You are bringi
+
+  Estadísticas de mensajes erróneos vs. correctos:
+                Errores  Correctos
+digit_ratio      0.1066     0.0277
+upper_ratio      0.0609     0.0992
+exclamations     0.2500     0.3600
+currency_signs   0.0000     0.0900
+has_url          0.0000     0.0300
+has_free         0.0000     0.0600
+has_win          0.0000     0.0200
+has_urgent       0.0000     0.0400
+msg_len         70.8125    86.8300
+
+=================================================================
+  EXPERIMENTO: TF-IDF solo  vs.  TF-IDF + Heurísticas
+=================================================================
+
+  Representación A — TF-IDF solo:
+    CV F1: 0.9392±0.0057
+    Test F1 (spam): 0.9435  Precision: 0.9342  Recall: 0.9530
+
+  Representación B — TF-IDF + Heurísticas (8 features extra):
+    CV F1: 0.9537±0.0058
+    Test F1 (spam): 0.9463  Precision: 0.9463  Recall: 0.9463
+
+  Diferencia en F1: +0.0028
+  Conclusión: Las features heurísticas mejoran marginalmente el F1. Se incluyen en el modelo final por su bajo costo computacional.
+
+=================================================================
+  RESUMEN EJECUTIVO PARA EL INFORME
+=================================================================
+
+  Dataset        : 5572 mensajes (13.4% spam, dataset desbalanceado)
+  Preprocesado   : limpieza conservadora (URLs→token, números→NUM, stemming)
+  Representación : TF-IDF unigramas+bigramas (max_features=3000)
+  Mejor modelo   : Linear SVM (C=5.0)
+  CV F1 (5-fold) : 0.9455
+  Test — Spam    : Precision=0.9463  
+                   Recall=0.9463  
+                   F1=0.9463
+  Test — Accuracy: 0.9857
+  AUC-ROC        : 0.9938
+  Falsos Positivos: 8  (ham clasificado como spam)
+  Falsos Negativos: 8  (spam que pasa como ham)
+  PCA            : No aplicado (matriz TF-IDF es dispersa; PCA no preserva
+                   estructura discreta y reduce interpretabilidad)
+  Heurísticas    : Calculadas y experimentadas; diferencia vs TF-IDF solo = +0.0028 F1
+  Overfitting    : Controlado con CV estratificada y test set independiente.
+                   Diferencia CV↔test < 0.01, sin señal de sobreajuste.
+
+  Gráficas generadas en /plots/:
+    01_class_distribution.png
+    02_message_length.png
+    03_heuristic_features_boxplot.png
+    04_wordcloud_ham.png
+    05_wordcloud_spam.png
+    06_top_terms.png
+    07_cv_comparison.png
+    08_confusion_all_models.png   ← 3 modelos base + SVM optimizado (consistente con consola)
+    09_feature_experiment.png
+
+  Script completado exitosamente.
